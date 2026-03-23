@@ -12,6 +12,12 @@ const callHKBU = async (messages) => {
   const model = process.env.HKBU_MODEL || 'gpt-5-mini';
   const apiVer = process.env.HKBU_API_VER || '2024-12-01-preview';
 
+  console.log('HKBU API Configuration:');
+  console.log('- API Key:', apiKey ? 'Present' : 'Missing');
+  console.log('- Base URL:', baseUrl || 'Missing');
+  console.log('- Model:', model);
+  console.log('- API Version:', apiVer);
+
   if (!apiKey) {
     const err = new Error('Missing HKBU_API_KEY in server/.env');
     err.statusCode = 500;
@@ -24,36 +30,51 @@ const callHKBU = async (messages) => {
     throw err;
   }
 
-  const response = await axios.post(
-    `${baseUrl}/chat/completions`,
-    {
-      model,
-      messages,
-      temperature: 0.7,
-      max_tokens: 800
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': apiKey,
-        'api-version': apiVer
+  console.log('\nSending request to HKBU API...');
+  console.log('Full URL:', `${baseUrl}/deployments/${model}/chat/completions?api-version=${apiVer}`);
+  console.log('Messages:', JSON.stringify(messages, null, 2));
+
+  try {
+    const response = await axios.post(
+      `${baseUrl}/deployments/${model}/chat/completions?api-version=${apiVer}`,
+      {
+        model,
+        messages,
+        max_tokens: 800
+        // Note: HKBU API doesn't support temperature for some models
       },
-      timeout: 30000
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': apiKey
+        },
+        timeout: 30000
+      }
+    );
+
+    console.log('\nHKBU API Response Status:', response.status);
+    console.log('Response Data:', JSON.stringify(response.data, null, 2));
+
+    if (
+      !response.data ||
+      !response.data.choices ||
+      response.data.choices.length === 0 ||
+      !response.data.choices[0].message
+    ) {
+      const err = new Error('Invalid response from AI service');
+      err.statusCode = 500;
+      throw err;
     }
-  );
 
-  if (
-    !response.data ||
-    !response.data.choices ||
-    response.data.choices.length === 0 ||
-    !response.data.choices[0].message
-  ) {
-    const err = new Error('Invalid response from AI service');
-    err.statusCode = 500;
-    throw err;
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('\n❌ HKBU API Call Failed:');
+    console.error('- Error Type:', error.name);
+    console.error('- Status:', error.response?.status);
+    console.error('- Data:', error.response?.data);
+    console.error('- Message:', error.message);
+    throw error;
   }
-
-  return response.data.choices[0].message.content;
 };
 
 /**
@@ -162,6 +183,11 @@ const getUserFinancialSummary = async (userId) => {
  */
 export const getAdvice = async (req, res) => {
   try {
+    console.log('\n=== AI Advice Request ===');
+    console.log('User ID:', req.user?._id);
+    console.log('Question:', req.body.question);
+    console.log('Include Context:', req.body.includeContext);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -197,32 +223,29 @@ User Financial Summary:
 - Number of Transactions: ${context.overall.transactionCount}
 
 Top Spending Categories (Last Month):
-${
-  context.topSpendingCategories.length > 0
-    ? context.topSpendingCategories
-        .map(
-          (cat) =>
-            `- ${cat.category}: $${cat.amount} (${cat.count} transactions)`
-        )
-        .join('\n')
-    : '- No recent spending data'
-}
+${context.topSpendingCategories.length > 0
+          ? context.topSpendingCategories
+            .map(
+              (cat) =>
+                `- ${cat.category}: $${cat.amount} (${cat.count} transactions)`
+            )
+            .join('\n')
+          : '- No recent spending data'
+        }
 
 Recent Transactions:
-${
-  context.recentTransactions.length > 0
-    ? context.recentTransactions
-        .map(
-          (t) =>
-            `- ${t.date}: ${t.type === 'income' ? '+' : '-'}$${Math.abs(
-              t.amount
-            )} (${t.category})${
-              t.description ? ` - ${t.description}` : ''
-            }`
-        )
-        .join('\n')
-    : '- No recent transactions'
-}
+${context.recentTransactions.length > 0
+          ? context.recentTransactions
+            .map(
+              (t) =>
+                `- ${t.date}: ${t.type === 'income' ? '+' : '-'}$${Math.abs(
+                  t.amount
+                )} (${t.category})${t.description ? ` - ${t.description}` : ''
+                }`
+            )
+            .join('\n')
+          : '- No recent transactions'
+        }
 
 User Question: ${question}
 
@@ -249,7 +272,11 @@ Please provide personalized financial advice based on this data. Be specific and
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('AI advice error:', error);
+    console.error('\n❌ AI Advice Error:');
+    console.error('Error Name:', error.name);
+    console.error('Error Message:', error.message);
+    console.error('Stack:', error.stack);
+    console.error('Full Error:', error);
 
     if (error.statusCode) {
       return res.status(error.statusCode).json({

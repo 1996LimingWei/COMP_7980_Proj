@@ -44,8 +44,8 @@ export const statsAPI = {
  * AI API
  */
 export const aiAPI = {
-    getAdvice: (question, includeContext = true) =>
-        apiClient.post('/ai/advice', { question, includeContext }),
+    getAdvice: (question) =>
+        apiClient.post('/ai/advice', { question, includeContext: true }),
     getGeneralAdvice: (question) =>
         apiClient.post('/ai/general', { question })
 };

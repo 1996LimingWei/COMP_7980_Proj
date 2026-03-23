@@ -1,11 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { aiAPI } from '@/api/index.js';
 
 const question = ref('');
 const conversation = ref([]);
 const loading = ref(false);
-const includeContext = ref(true);
+const showPrivacyModal = ref(false);
+const hasAcceptedPrivacy = ref(false);
 
 const askQuestion = async () => {
   if (!question.value.trim()) return;
@@ -17,7 +18,7 @@ const askQuestion = async () => {
   question.value = '';
 
   try {
-    const response = await aiAPI.getAdvice(userQuestion, includeContext.value);
+    const response = await aiAPI.getAdvice(userQuestion);
     conversation.value.push({
       role: 'assistant',
       content: response.data.answer,
@@ -38,6 +39,31 @@ const clearConversation = () => {
   conversation.value = [];
 };
 
+const acceptPrivacy = () => {
+  localStorage.setItem('aiAdvisorPrivacyAccepted', 'true');
+  hasAcceptedPrivacy.value = true;
+  showPrivacyModal.value = false;
+};
+
+const declinePrivacy = () => {
+  // Redirect to dashboard or show message that AI advisor cannot be used
+  alert('AI Financial Advisor requires consent to use your financial data for personalized advice. You will be redirected to the Dashboard.');
+  window.location.href = '/dashboard';
+};
+
+const showPrivacyInfo = () => {
+  showPrivacyModal.value = true;
+};
+
+onMounted(() => {
+  const accepted = localStorage.getItem('aiAdvisorPrivacyAccepted');
+  if (!accepted) {
+    showPrivacyModal.value = true;
+  } else {
+    hasAcceptedPrivacy.value = true;
+  }
+});
+
 const suggestedQuestions = [
   'How can I save more money?',
   'What should I do with my extra income?',
@@ -48,7 +74,85 @@ const suggestedQuestions = [
 
 <template>
   <div class="ai-advice-page py-4">
-    <div class="container">
+    <!-- Privacy Agreement Modal -->
+    <div v-if="showPrivacyModal" class="privacy-modal-overlay">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-shield-check me-2"></i>
+              Privacy & Data Usage Agreement
+            </h5>
+          </div>
+          <div class="modal-body p-4" style="background-color: #ffffff; color: #000000;">
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Important: Please read before continuing</strong>
+            </div>
+            
+            <h6 class="fw-bold mb-3">How We Use Your Financial Data</h6>
+            <p class="mb-3">
+              The AI Financial Advisor uses your personal financial data to provide 
+              <strong>personalized, actionable financial advice</strong>. By accepting this agreement, 
+              you consent to the following:
+            </p>
+            
+            <div class="card bg-light border-0 mb-3">
+              <div class="card-body">
+                <h6 class="fw-semibold"><i class="bi bi-check-circle text-success me-2"></i>What We Access:</h6>
+                <ul class="mb-0 ps-3">
+                  <li>Your transaction history and spending patterns</li>
+                  <li>Income and expense summaries</li>
+                  <li>Category-wise spending breakdown</li>
+                  <li>Recent financial activities</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="card bg-light border-0 mb-3">
+              <div class="card-body">
+                <h6 class="fw-semibold"><i class="bi bi-robot text-primary me-2"></i>How AI Uses Your Data:</h6>
+                <ul class="mb-0 ps-3">
+                  <li>Analyzes your spending habits to identify saving opportunities</li>
+                  <li>Provides personalized budgeting recommendations</li>
+                  <li>Offers context-aware answers to your financial questions</li>
+                  <li>Generates tailored advice based on your financial behavior</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="card bg-light border-0 mb-3">
+              <div class="card-body">
+                <h6 class="fw-semibold"><i class="bi bi-lock text-warning me-2"></i>Data Security & Privacy:</h6>
+                <ul class="mb-0 ps-3">
+                  <li>Your data is encrypted and securely stored</li>
+                  <li>AI processing happens through secure HKBU ChatGPT API</li>
+                  <li>Your information is never shared with third parties</li>
+                  <li>You can withdraw consent anytime by clearing your data</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="alert alert-warning mb-0">
+              <i class="bi bi-exclamation-triangle me-2"></i>
+              <strong>Note:</strong> If you do not consent to using your financial data, 
+              the AI Advisor cannot provide personalized advice. You will be redirected to the Dashboard.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="declinePrivacy">
+              <i class="bi bi-x-circle me-2"></i>Decline
+            </button>
+            <button type="button" class="btn btn-primary" @click="acceptPrivacy">
+              <i class="bi bi-check-circle me-2"></i>I Understand & Agree
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content - Always render but disable interactions when privacy not accepted -->
+    <div class="container" :style="!hasAcceptedPrivacy ? 'pointer-events: none; filter: blur(2px);' : ''">
       <div class="row justify-content-center">
         <div class="col-lg-8">
           <!-- Header -->
@@ -58,23 +162,14 @@ const suggestedQuestions = [
             </div>
             <h2 class="fw-bold">AI Financial Advisor</h2>
             <p class="text-muted">Ask me anything about your finances</p>
-          </div>
-
-          <!-- Settings -->
-          <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body">
-              <div class="form-check">
-                <input
-                  id="includeContext"
-                  v-model="includeContext"
-                  type="checkbox"
-                  class="form-check-input"
-                />
-                <label class="form-check-label" for="includeContext">
-                  Include my financial data for personalized advice
-                </label>
-              </div>
-            </div>
+            <button 
+              class="btn btn-sm btn-link text-muted mt-2" 
+              @click="showPrivacyInfo"
+              title="View Privacy Agreement"
+            >
+              <i class="bi bi-shield-check me-1"></i>
+              Privacy & Data Usage
+            </button>
           </div>
 
           <!-- Suggested Questions -->
@@ -188,5 +283,74 @@ const suggestedQuestions = [
 .btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
+}
+
+/* Privacy Modal Overlay */
+.privacy-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  max-width: 900px;
+  width: 100%;
+  animation: slideUp 0.3s ease-out;
+  background-color: #ffffff;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  border-radius: 15px 15px 0 0;
+  border-bottom: none;
+}
+
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  color: #212529;
+}
+
+.modal-body h6,
+.modal-body p,
+.modal-body strong,
+.modal-body li {
+  color: #212529;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1rem 1.5rem;
 }
 </style>
