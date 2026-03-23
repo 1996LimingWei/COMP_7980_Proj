@@ -140,7 +140,7 @@ cp .env.example .env
 ```
 
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5001/api
 ```
 
 #### Mobile App (`mobile/.env`)
@@ -150,7 +150,7 @@ cd mobile
 
 Create `.env`:
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5001/api
 ```
 
 ### 3. Seed the Database
@@ -169,7 +169,7 @@ This will import 51 users and 1200 transactions from the CSV files.
 cd server
 npm run dev
 ```
-Server will run on http://localhost:5000
+Server will run on http://localhost:5001
 
 #### Start Web Client
 ```bash

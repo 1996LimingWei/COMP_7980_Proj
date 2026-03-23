@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.js';
+import Transactions from '@/views/Transactions.vue';
 
 // Views
 import Login from '@/views/Login.vue';
@@ -41,6 +42,12 @@ const routes = [
         path: '/profile',
         name: 'Profile',
         component: Profile,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/transactions',
+        name: 'Transactions',
+        component: Transactions,
         meta: { requiresAuth: true }
     }
 ];
