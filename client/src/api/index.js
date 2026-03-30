@@ -44,10 +44,12 @@ export const statsAPI = {
  * AI API
  */
 export const aiAPI = {
-    getAdvice: (question) =>
-        apiClient.post('/ai/advice', { question, includeContext: true }),
+    getAdvice: (question, sessionId = null) =>
+        apiClient.post('/ai/advice', { question, sessionId }),
     getGeneralAdvice: (question) =>
-        apiClient.post('/ai/general', { question })
+        apiClient.post('/ai/general', { question }),
+    clearConversation: (sessionId) =>
+        apiClient.delete(`/ai/conversation/${sessionId}`)
 };
 
 export default {

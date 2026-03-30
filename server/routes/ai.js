@@ -1,6 +1,6 @@
 import express from 'express';
-import { body } from 'express-validator';
-import { getAdvice, getGeneralAdvice } from '../controllers/aiController.js';
+import { body, param } from 'express-validator';
+import { getAdvice, getGeneralAdvice, clearConversationHistory } from '../controllers/aiController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -10,7 +10,7 @@ router.use(protect);
 
 /**
  * @route   POST /api/ai/advice
- * @desc    Get AI financial advice with user's financial context
+ * @desc    Get AI financial advice with user's financial context and conversation memory
  * @access  Private
  */
 router.post(
@@ -22,10 +22,10 @@ router.post(
             .withMessage('Question is required')
             .isLength({ max: 500 })
             .withMessage('Question cannot exceed 500 characters'),
-        body('includeContext')
+        body('sessionId')
             .optional()
-            .isBoolean()
-            .withMessage('includeContext must be a boolean')
+            .isString()
+            .withMessage('sessionId must be a string')
     ],
     getAdvice
 );
@@ -46,6 +46,21 @@ router.post(
             .withMessage('Question cannot exceed 500 characters')
     ],
     getGeneralAdvice
+);
+
+/**
+ * @route   DELETE /api/ai/conversation/:sessionId
+ * @desc    Clear conversation history
+ * @access  Private
+ */
+router.delete(
+    '/conversation/:sessionId',
+    [
+        param('sessionId')
+            .notEmpty()
+            .withMessage('Session ID is required')
+    ],
+    clearConversationHistory
 );
 
 export default router;
