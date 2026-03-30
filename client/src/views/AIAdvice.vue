@@ -7,6 +7,18 @@ const conversation = ref([]);
 const loading = ref(false);
 const showPrivacyModal = ref(false);
 const hasAcceptedPrivacy = ref(false);
+const sessionId = ref(null);
+const hasMemory = ref(false);
+
+// Generate or retrieve session ID for conversation memory
+const getSessionId = () => {
+  let sid = localStorage.getItem('aiAdvisorSessionId');
+  if (!sid) {
+    sid = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('aiAdvisorSessionId', sid);
+  }
+  return sid;
+};
 
 const askQuestion = async () => {
   if (!question.value.trim()) return;
@@ -18,13 +30,25 @@ const askQuestion = async () => {
   question.value = '';
 
   try {
-    const response = await aiAPI.getAdvice(userQuestion);
+    // Use session ID for conversation memory
+    const response = await aiAPI.getAdvice(userQuestion, sessionId.value);
+    
+    // Update session ID if server returned a new one
+    if (response.data.sessionId) {
+      sessionId.value = response.data.sessionId;
+      localStorage.setItem('aiAdvisorSessionId', response.data.sessionId);
+    }
+    
+    // Check if conversation has memory
+    hasMemory.value = response.data.hasMemory || response.data.messageCount > 2;
+    
     conversation.value.push({
       role: 'assistant',
       content: response.data.answer,
       timestamp: response.data.timestamp
     });
   } catch (error) {
+    console.error('Error getting advice:', error);
     conversation.value.push({
       role: 'assistant',
       content: 'Sorry, I encountered an error. Please try again later.',
@@ -35,14 +59,33 @@ const askQuestion = async () => {
   }
 };
 
-const clearConversation = () => {
+const clearConversation = async () => {
+  try {
+    // Clear on server
+    if (sessionId.value) {
+      await aiAPI.clearConversation(sessionId.value);
+    }
+  } catch (error) {
+    console.error('Error clearing conversation on server:', error);
+  }
+  
+  // Clear locally
   conversation.value = [];
+  hasMemory.value = false;
+  
+  // Generate new session ID
+  const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  sessionId.value = newSessionId;
+  localStorage.setItem('aiAdvisorSessionId', newSessionId);
 };
 
 const acceptPrivacy = () => {
   localStorage.setItem('aiAdvisorPrivacyAccepted', 'true');
   hasAcceptedPrivacy.value = true;
   showPrivacyModal.value = false;
+  
+  // Initialize session ID when accepting privacy
+  sessionId.value = getSessionId();
 };
 
 const declinePrivacy = () => {
@@ -61,6 +104,7 @@ onMounted(() => {
     showPrivacyModal.value = true;
   } else {
     hasAcceptedPrivacy.value = true;
+    sessionId.value = getSessionId();
   }
 });
 
@@ -190,7 +234,12 @@ const suggestedQuestions = [
           <!-- Conversation -->
           <div v-if="conversation.length > 0" class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">Conversation</h5>
+              <div>
+                <h5 class="mb-0">Conversation</h5>
+                <small v-if="hasMemory" class="text-success">
+                  <i class="bi bi-memory me-1"></i>AI remembers our previous conversation
+                </small>
+              </div>
               <button class="btn btn-sm btn-outline-secondary" @click="clearConversation">
                 <i class="bi bi-trash me-1"></i>Clear
               </button>
