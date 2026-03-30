@@ -221,29 +221,3 @@ HKBU_API_VER=2024-12-01-preview
 2. **Session-Based**: Each session is isolated; no cross-session memory
 3. **Data Retention**: Conversations persist in MongoDB until explicitly cleared
 4. **No PII Storage**: Only conversation content stored; no additional personal data
-
-## Usage Example
-
-```javascript
-// User asks first question
-POST /api/ai/advice
-{
-  "question": "Hi, I'm Denny. How can I save money?"
-}
-// Response: { answer: "Hello Denny, here are tips...", hasMemory: false }
-
-// User asks follow-up
-POST /api/ai/advice
-{
-  "question": "What is my name?",
-  "sessionId": "session_123..."
-}
-// Response: { answer: "Your name is Denny.", hasMemory: true }
-```
-
-## Future Enhancements
-
-1. **Cross-Session Memory**: Optional long-term memory across sessions
-2. **User Preferences**: Remember investment preferences, risk tolerance
-3. **Conversation Export**: Allow users to download conversation history
-4. **Smart Summarization**: Context-aware summarization based on topic changes
