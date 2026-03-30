@@ -79,8 +79,6 @@ const getSummarizedHistory = async (sessionId, messages) => {
         });
     });
 
-    console.log(`Session ${sessionId}: Summarized ${messagesToSummarize.length} messages`);
-
     return result;
 };
 
@@ -119,7 +117,7 @@ Summary:`;
                     'Content-Type': 'application/json',
                     'api-key': apiKey
                 },
-                timeout: 30000
+                timeout: 60000 // HKBU API requires 60s timeout
             }
         );
 

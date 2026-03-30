@@ -234,12 +234,7 @@ const suggestedQuestions = [
           <!-- Conversation -->
           <div v-if="conversation.length > 0" class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-              <div>
-                <h5 class="mb-0">Conversation</h5>
-                <small v-if="hasMemory" class="text-success">
-                  <i class="bi bi-memory me-1"></i>AI remembers our previous conversation
-                </small>
-              </div>
+              <h5 class="mb-0">Conversation</h5>
               <button class="btn btn-sm btn-outline-secondary" @click="clearConversation">
                 <i class="bi bi-trash me-1"></i>Clear
               </button>
