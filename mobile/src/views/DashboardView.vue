@@ -71,6 +71,14 @@
 import { onMounted } from 'vue';
 import { useTransactionStore } from '@/stores/transactions.js';
 import { trashOutline } from 'ionicons/icons';
+import {
+  IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
+  IonGrid, IonRow, IonCol, IonCard, IonCardHeader,
+  IonCardSubtitle, IonCardTitle, IonList, IonListHeader,
+  IonLabel, IonItemSliding, IonItem, IonItemOptions,
+  IonItemOption, IonIcon, IonNote, IonRefresher,
+  IonRefresherContent
+} from '@ionic/vue';
 
 const transactionStore = useTransactionStore();
 
