@@ -11,7 +11,7 @@
         <ion-card>
           <ion-card-content>
             <ion-input
-              label="Name"
+              label="Full Name"
               label-placement="floating"
               fill="outline"
               v-model="name"
@@ -39,6 +39,20 @@
               required
               class="ion-margin-bottom"
             ></ion-input>
+
+            <ion-input
+              label="Confirm Password"
+              label-placement="floating"
+              fill="outline"
+              v-model="confirmPassword"
+              type="password"
+              required
+              class="ion-margin-bottom"
+            ></ion-input>
+
+            <ion-note color="medium" class="ion-margin-bottom" style="display: block;">
+              Password must be at least 6 characters long.
+            </ion-note>
 
             <ion-button expand="block" @click="handleRegister" :disabled="loading" class="ion-margin-top">
               <ion-spinner v-if="loading" name="crescent"></ion-spinner>
@@ -70,7 +84,7 @@ import { useAuthStore } from '@/stores/auth.js';
 import { walletOutline } from 'ionicons/icons';
 import {
   IonPage, IonContent, IonCard, IonCardContent,
-  IonInput, IonButton, IonSpinner, IonAlert, IonIcon
+  IonInput, IonButton, IonSpinner, IonAlert, IonIcon, IonNote
 } from '@ionic/vue';
 
 const router = useRouter();
@@ -78,19 +92,38 @@ const authStore = useAuthStore();
 const name = ref('');
 const email = ref('');
 const password = ref('');
+const confirmPassword = ref('');
 const loading = ref(false);
 const showError = ref(false);
 const errorMessage = ref('');
 
 const handleRegister = async () => {
-  if (!name.value || !email.value || !password.value) return;
+  // Validation
+  if (!name.value || !email.value || !password.value) {
+    errorMessage.value = 'Please fill in all fields.';
+    showError.value = true;
+    return;
+  }
+
+  if (password.value.length < 6) {
+    errorMessage.value = 'Password must be at least 6 characters long.';
+    showError.value = true;
+    return;
+  }
+
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = 'Passwords do not match.';
+    showError.value = true;
+    return;
+  }
+
   loading.value = true;
   const result = await authStore.register({ name: name.value, email: email.value, password: password.value });
   loading.value = false;
   if (result.success) {
     router.replace('/tabs/dashboard');
   } else {
-    errorMessage.value = result.message || 'Registration failed.';
+    errorMessage.value = result.message || 'Registration failed. Please try again.';
     showError.value = true;
   }
 };
