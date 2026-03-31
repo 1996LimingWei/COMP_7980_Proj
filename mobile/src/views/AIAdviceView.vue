@@ -209,7 +209,7 @@ const suggestedQuestions = [
 const getSessionId = () => {
   let sid = localStorage.getItem('aiAdvisorSessionId');
   if (!sid) {
-    sid = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sid = `session_${Date.now()}_${crypto.randomUUID()}`;
     localStorage.setItem('aiAdvisorSessionId', sid);
   }
   return sid;
@@ -301,7 +301,7 @@ const handleClearConversation = async () => {
   conversation.value = [];
 
   // Generate new session ID
-  const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const newSessionId = `session_${Date.now()}_${crypto.randomUUID()}`;
   sessionId.value = newSessionId;
   localStorage.setItem('aiAdvisorSessionId', newSessionId);
 };
