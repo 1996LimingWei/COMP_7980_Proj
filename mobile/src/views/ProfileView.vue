@@ -15,6 +15,45 @@
           </ion-avatar>
           <h2>{{ authStore.userData?.name || 'User' }}</h2>
           <p>{{ authStore.userData?.email }}</p>
+          <ion-badge v-if="authStore.isDemo" color="warning">Demo Account</ion-badge>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Edit Profile Card -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Edit Profile</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-input
+            label="Full Name"
+            label-placement="floating"
+            fill="outline"
+            v-model="name"
+            type="text"
+            required
+            class="ion-margin-bottom"
+          ></ion-input>
+
+          <ion-input
+            label="Email"
+            label-placement="floating"
+            fill="outline"
+            v-model="email"
+            type="email"
+            required
+            class="ion-margin-bottom"
+          ></ion-input>
+
+          <ion-item lines="none" class="ion-margin-bottom">
+            <ion-label>Role</ion-label>
+            <ion-note slot="end">{{ authStore.userData?.role || 'user' }}</ion-note>
+          </ion-item>
+
+          <ion-button expand="block" @click="updateProfile" :disabled="profileLoading">
+            <ion-spinner v-if="profileLoading" name="crescent"></ion-spinner>
+            <span v-else>Update Profile</span>
+          </ion-button>
         </ion-card-content>
       </ion-card>
 
@@ -65,6 +104,14 @@
         :buttons="logoutButtons"
         @didDismiss="showLogoutConfirm = false"
       ></ion-alert>
+
+      <ion-toast
+        :is-open="showMessage"
+        :message="messageText"
+        :duration="2000"
+        :color="messageColor"
+        @didDismiss="showMessage = false"
+      ></ion-toast>
     </ion-content>
   </ion-page>
 </template>
@@ -79,20 +126,57 @@ import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
   IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonList, IonListHeader, IonItem, IonLabel, IonNote,
-  IonIcon, IonAvatar, IonAlert
+  IonIcon, IonAvatar, IonAlert, IonInput, IonButton,
+  IonSpinner, IonToast, IonBadge
 } from '@ionic/vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const transactionStore = useTransactionStore();
 const showLogoutConfirm = ref(false);
+const profileLoading = ref(false);
+const showMessage = ref(false);
+const messageText = ref('');
+const messageColor = ref('success');
+
+const name = ref('');
+const email = ref('');
 
 onMounted(() => {
   transactionStore.fetchDashboardData();
+  if (authStore.userData) {
+    name.value = authStore.userData.name || '';
+    email.value = authStore.userData.email || '';
+  }
 });
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+};
+
+const updateProfile = async () => {
+  if (!name.value || !email.value) {
+    messageText.value = 'Please fill in all fields.';
+    messageColor.value = 'danger';
+    showMessage.value = true;
+    return;
+  }
+
+  profileLoading.value = true;
+  const result = await authStore.updateProfile({
+    name: name.value,
+    email: email.value
+  });
+  profileLoading.value = false;
+
+  if (result.success) {
+    messageText.value = 'Profile updated successfully!';
+    messageColor.value = 'success';
+  } else {
+    messageText.value = result.message || 'Failed to update profile.';
+    messageColor.value = 'danger';
+  }
+  showMessage.value = true;
 };
 
 const confirmLogout = () => {
