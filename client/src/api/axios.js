@@ -27,12 +27,22 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Handle 401 Unauthorized - token expired or invalid
-        if (error.response?.status === 401) {
+// Response interceptor - handle errors
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        const status = error.response?.status;
+        const currentPath = window.location.pathname;
+
+        if (status === 401 && currentPath !== '/login') {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
         }
+
+        return Promise.reject(error);
+    }
+);
         return Promise.reject(error);
     }
 );
