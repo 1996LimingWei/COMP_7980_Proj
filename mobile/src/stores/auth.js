@@ -11,7 +11,9 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
-    userData: (state) => state.user
+    userData: (state) => state.user,
+    isAdmin: (state) => state.user?.role === 'admin',
+    isDemo: (state) => state.user?.isDemo === true
   },
 
   actions: {
@@ -27,7 +29,7 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('user', JSON.stringify(user));
         return { success: true };
       } catch (error) {
-        const message = error.response?.data?.message || 'Login failed.';
+        const message = error.response?.data?.message || 'Login failed. Please try again.';
         this.error = message;
         return { success: false, message };
       } finally {
@@ -47,7 +49,38 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('user', JSON.stringify(user));
         return { success: true };
       } catch (error) {
-        const message = error.response?.data?.message || 'Registration failed.';
+        const message = error.response?.data?.message || 'Registration failed. Please try again.';
+        this.error = message;
+        return { success: false, message };
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchUser() {
+      if (!this.token) return;
+      try {
+        const response = await userAPI.getProfile();
+        this.user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        if (error.response?.status === 401) {
+          this.logout();
+        }
+      }
+    },
+
+    async updateProfile(userData) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await userAPI.updateProfile(userData);
+        this.user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        return { success: true, user: response.data.user };
+      } catch (error) {
+        const message = error.response?.data?.message || 'Failed to update profile.';
         this.error = message;
         return { success: false, message };
       } finally {
@@ -61,6 +94,10 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+    },
+
+    clearError() {
+      this.error = null;
     }
   }
 });

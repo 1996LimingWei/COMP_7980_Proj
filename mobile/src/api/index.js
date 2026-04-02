@@ -8,11 +8,13 @@ export const authAPI = {
 
 export const userAPI = {
   getProfile: () => apiClient.get('/users/me'),
-  updateProfile: (data) => apiClient.put('/users/me', data)
+  updateProfile: (data) => apiClient.put('/users/me', data),
+  getUserWithTransactions: (params) => apiClient.get('/users/me/transactions', { params })
 };
 
 export const transactionAPI = {
   getAll: (params) => apiClient.get('/transactions', { params }),
+  getById: (id) => apiClient.get(`/transactions/${id}`),
   getRecent: (limit = 5) => apiClient.get('/transactions/recent', { params: { limit } }),
   create: (data) => apiClient.post('/transactions', data),
   update: (id, data) => apiClient.put(`/transactions/${id}`, data),
@@ -21,13 +23,18 @@ export const transactionAPI = {
 
 export const statsAPI = {
   getSummary: () => apiClient.get('/stats/summary'),
-  getByCategory: () => apiClient.get('/stats/category'),
+  getByCategory: (params) => apiClient.get('/stats/category', { params }),
+  getMonthly: (months) => apiClient.get('/stats/monthly', { params: { months } }),
   getDaily: (days) => apiClient.get('/stats/daily', { params: { days } })
 };
 
 export const aiAPI = {
-  getAdvice: (question, includeContext = true) =>
-    apiClient.post('/ai/advice', { question, includeContext })
+  getAdvice: (question, sessionId = null) =>
+    apiClient.post('/ai/advice', { question, sessionId }),
+  getGeneralAdvice: (question) =>
+    apiClient.post('/ai/general', { question }),
+  clearConversation: (sessionId) =>
+    apiClient.delete(`/ai/conversation/${sessionId}`)
 };
 
 export default { auth: authAPI, user: userAPI, transaction: transactionAPI, stats: statsAPI, ai: aiAPI };

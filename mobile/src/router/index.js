@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { useAuthStore } from '@/stores/auth.js';
 
 // Views
@@ -6,6 +6,7 @@ import LoginView from '@/views/LoginView.vue';
 import RegisterView from '@/views/RegisterView.vue';
 import TabsView from '@/views/TabsView.vue';
 import DashboardView from '@/views/DashboardView.vue';
+import TransactionsView from '@/views/TransactionsView.vue';
 import AddTransactionView from '@/views/AddTransactionView.vue';
 import AIAdviceView from '@/views/AIAdviceView.vue';
 import ProfileView from '@/views/ProfileView.vue';
@@ -35,6 +36,10 @@ const routes = [
             {
                 path: 'dashboard',
                 component: DashboardView
+            },
+            {
+                path: 'transactions',
+                component: TransactionsView
             },
             {
                 path: 'add',

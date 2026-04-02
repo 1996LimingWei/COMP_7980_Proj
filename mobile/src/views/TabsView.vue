@@ -7,6 +7,10 @@
           <ion-icon :icon="homeOutline"></ion-icon>
           <ion-label>Home</ion-label>
         </ion-tab-button>
+        <ion-tab-button tab="transactions" href="/tabs/transactions">
+          <ion-icon :icon="listOutline"></ion-icon>
+          <ion-label>Transactions</ion-label>
+        </ion-tab-button>
         <ion-tab-button tab="add" href="/tabs/add">
           <ion-icon :icon="addCircleOutline"></ion-icon>
           <ion-label>Add</ion-label>
@@ -26,5 +30,5 @@
 
 <script setup>
 import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/vue';
-import { homeOutline, addCircleOutline, chatbubblesOutline, personOutline } from 'ionicons/icons';
+import { homeOutline, listOutline, addCircleOutline, chatbubblesOutline, personOutline } from 'ionicons/icons';
 </script>
