@@ -11,7 +11,7 @@ A full-stack personal finance management application built with Vue.js, Express.
 - **AI Financial Advice**: Personalized financial advice using HKBU ChatGPT API
 - **Responsive Design**: Modern UI with Bootstrap 5
 
-### Extra Features (Bonus)
+### Extra Features
 - **Data Visualizations**: 
   - Pie chart for spending by category
   - Line/area chart for daily spending trends
@@ -44,48 +44,6 @@ A full-stack personal finance management application built with Vue.js, Express.
 - **Ionic Vue** - Mobile app framework
 - **Capacitor** - Native runtime
 - Same state management and API layer as web app
-
-## Project Structure
-
-```
-├── server/                 # Backend (Express.js)
-│   ├── config/            # Database configuration
-│   ├── controllers/       # Route controllers
-│   ├── middleware/        # Authentication middleware
-│   ├── models/            # Mongoose models
-│   ├── routes/            # API routes
-│   ├── scripts/           # Database seeding
-│   ├── data/              # CSV data files
-│   ├── .env.example       # Environment variables template
-│   ├── index.js           # Entry point
-│   └── package.json
-│
-├── client/                 # Web Frontend (Vue.js)
-│   ├── src/
-│   │   ├── api/           # API client
-│   │   ├── components/    # Vue components
-│   │   ├── router/        # Vue Router config
-│   │   ├── stores/        # Pinia stores
-│   │   ├── views/         # Page components
-│   │   ├── App.vue
-│   │   └── main.js
-│   ├── .env.example
-│   └── package.json
-│
-├── mobile/                 # Mobile App (Ionic)
-│   ├── src/
-│   │   ├── api/           # API client
-│   │   ├── router/        # Router config
-│   │   ├── stores/        # Pinia stores
-│   │   ├── views/         # Page components
-│   │   ├── App.vue
-│   │   └── main.js
-│   └── package.json
-│
-├── Mock_Users.csv         # Sample user data
-├── Mock_Transactions.csv  # Sample transaction data
-└── README.md
-```
 
 ## Prerequisites
 
