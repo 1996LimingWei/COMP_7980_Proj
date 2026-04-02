@@ -225,10 +225,33 @@ export const getDailySpending = async (req, res) => {
  */
 export const getDashboardSummary = async (req, res) => {
     try {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        // Find the most recent transaction date for this user
+        const mostRecentTransaction = await Transaction.findOne(
+            { userId: req.user._id },
+            { date: 1 },
+            { sort: { date: -1 } }
+        );
+
+        let thisMonthStart, thisMonthEnd, lastMonthStart, lastMonthEnd;
+
+        if (mostRecentTransaction) {
+            // Use the month of the most recent transaction as "this month"
+            const recentDate = new Date(mostRecentTransaction.date);
+            const recentYear = recentDate.getFullYear();
+            const recentMonth = recentDate.getMonth();
+
+            thisMonthStart = new Date(recentYear, recentMonth, 1);
+            thisMonthEnd = new Date(recentYear, recentMonth + 1, 0, 23, 59, 59, 999);
+            lastMonthStart = new Date(recentYear, recentMonth - 1, 1);
+            lastMonthEnd = new Date(recentYear, recentMonth, 0, 23, 59, 59, 999);
+        } else {
+            // Fallback to current month if no transactions
+            const now = new Date();
+            thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+        }
 
         // Overall summary
         const overallSummary = await Transaction.aggregate([
@@ -256,12 +279,12 @@ export const getDashboardSummary = async (req, res) => {
             }
         ]);
 
-        // This month summary
+        // This month summary (based on most recent transaction month)
         const thisMonthSummary = await Transaction.aggregate([
             {
                 $match: {
                     userId: new mongoose.Types.ObjectId(req.user._id),
-                    date: { $gte: startOfMonth }
+                    date: { $gte: thisMonthStart, $lte: thisMonthEnd }
                 }
             },
             {
@@ -282,12 +305,12 @@ export const getDashboardSummary = async (req, res) => {
             }
         ]);
 
-        // Last month summary
+        // Last month summary (month before most recent transaction month)
         const lastMonthSummary = await Transaction.aggregate([
             {
                 $match: {
                     userId: new mongoose.Types.ObjectId(req.user._id),
-                    date: { $gte: startOfLastMonth, $lte: endOfLastMonth }
+                    date: { $gte: lastMonthStart, $lte: lastMonthEnd }
                 }
             },
             {
@@ -340,6 +363,12 @@ export const getDashboardSummary = async (req, res) => {
         const thisMonth = thisMonthSummary[0] || { income: 0, expense: 0, count: 0 };
         const lastMonth = lastMonthSummary[0] || { income: 0, expense: 0, count: 0 };
 
+        // Get month names for display
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        const thisMonthName = monthNames[thisMonthStart.getMonth()];
+        const lastMonthName = monthNames[lastMonthStart.getMonth()];
+
         res.json({
             success: true,
             summary: {
@@ -350,12 +379,14 @@ export const getDashboardSummary = async (req, res) => {
                     transactionCount: overall.transactionCount
                 },
                 thisMonth: {
+                    label: thisMonthName,
                     income: parseFloat(thisMonth.income.toFixed(2)),
                     expense: parseFloat(Math.abs(thisMonth.expense).toFixed(2)),
                     net: parseFloat((thisMonth.income + thisMonth.expense).toFixed(2)),
                     count: thisMonth.count
                 },
                 lastMonth: {
+                    label: lastMonthName,
                     income: parseFloat(lastMonth.income.toFixed(2)),
                     expense: parseFloat(Math.abs(lastMonth.expense).toFixed(2)),
                     net: parseFloat((lastMonth.income + lastMonth.expense).toFixed(2)),

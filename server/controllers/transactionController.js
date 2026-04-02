@@ -16,7 +16,8 @@ export const getTransactions = async (req, res) => {
             category,
             startDate,
             endDate,
-            type
+            type,
+            search
         } = req.query;
 
         // Build filter object
@@ -40,6 +41,27 @@ export const getTransactions = async (req, res) => {
                 filter.amount = { $gt: 0 };
             } else if (type === 'expense') {
                 filter.amount = { $lt: 0 };
+            }
+        }
+
+        // Search filter (description or amount)
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            const searchNum = parseFloat(search);
+
+            if (!isNaN(searchNum)) {
+                // Search matches number - search in description or amount
+                filter.$or = [
+                    { description: searchRegex },
+                    { category: searchRegex },
+                    { amount: searchNum }
+                ];
+            } else {
+                // Search is text only - search in description and category
+                filter.$or = [
+                    { description: searchRegex },
+                    { category: searchRegex }
+                ];
             }
         }
 
@@ -88,7 +110,8 @@ export const getTransactions = async (req, res) => {
             pagination: {
                 page: parseInt(page),
                 pages: Math.ceil(total / parseInt(limit)),
-                limit: parseInt(limit)
+                limit: parseInt(limit),
+                total
             },
             summary: stats.length > 0 ? {
                 totalBalance: stats[0].totalAmount,

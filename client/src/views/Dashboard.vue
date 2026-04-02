@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useTransactionStore } from '@/stores/transactions.js';
 import VueApexCharts from 'vue3-apexcharts';
 import AddTransactionModal from '@/components/AddTransactionModal.vue';
@@ -8,9 +8,45 @@ const transactionStore = useTransactionStore();
 const showAddModal = ref(false);
 const editingTransaction = ref(null);
 
+// Time range selector for category chart
+const categoryTimeRange = ref(30);
+const dailyTimeRange = ref(30);
+const timeRangeOptions = [
+  { value: 30, label: 'Last 30 Days' },
+  { value: 90, label: 'Last 90 Days' },
+  { value: 180, label: 'Last 180 Days' },
+  { value: 360, label: 'Last 360 Days' }
+];
+
 onMounted(() => {
   transactionStore.fetchDashboardData();
+  fetchCategoryStats();
+  fetchDailyStats();
 });
+
+// Watch for time range changes
+watch(categoryTimeRange, () => {
+  fetchCategoryStats();
+});
+
+watch(dailyTimeRange, () => {
+  fetchDailyStats();
+});
+
+const fetchCategoryStats = async () => {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - categoryTimeRange.value);
+  
+  await transactionStore.fetchCategoryStats({
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0]
+  });
+};
+
+const fetchDailyStats = async () => {
+  await transactionStore.fetchDailyStats(dailyTimeRange.value);
+};
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', {
@@ -41,17 +77,30 @@ const categoryChartSeries = computed(() =>
 );
 
 // Line chart for daily spending
-const dailyChartOptions = computed(() => ({
-  chart: { type: 'area', toolbar: { show: false } },
-  xaxis: { 
-    categories: transactionStore.dailyStats.map(s => s.date),
-    labels: { rotate: -45 }
-  },
-  colors: ['#667eea'],
-  fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.2 } },
-  dataLabels: { enabled: false },
-  stroke: { curve: 'smooth' }
-}));
+const dailyChartOptions = computed(() => {
+  // Determine tick interval based on time range
+  let tickAmount = undefined;
+  if (dailyTimeRange.value === 90) {
+    tickAmount = 6; // Show ~6 ticks for 90 days (every ~15 days)
+  } else if (dailyTimeRange.value === 180) {
+    tickAmount = 6; // Show ~6 ticks for 180 days (every ~30 days)
+  } else if (dailyTimeRange.value === 360) {
+    tickAmount = 6; // Show ~6 ticks for 360 days (every ~60 days)
+  }
+
+  return {
+    chart: { type: 'area', toolbar: { show: false } },
+    xaxis: { 
+      categories: transactionStore.dailyStats.map(s => s.date),
+      labels: { rotate: -45 },
+      tickAmount: tickAmount
+    },
+    colors: ['#667eea'],
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.2 } },
+    dataLabels: { enabled: false },
+    stroke: { curve: 'smooth' }
+  };
+});
 
 const dailyChartSeries = computed(() => [{
   name: 'Expenses',
@@ -118,7 +167,7 @@ const handleTransactionSaved = async () => {
                   <i class="bi bi-arrow-down-circle"></i>
                 </div>
                 <div class="ms-3">
-                  <p class="text-muted mb-0">Income (This Month)</p>
+                  <p class="text-muted mb-0">Income ({{ transactionStore.summary?.thisMonth?.label || 'This Month' }})</p>
                   <h4 class="fw-bold mb-0 text-success">{{ formatCurrency(transactionStore.summary?.thisMonth?.income) }}</h4>
                 </div>
               </div>
@@ -133,7 +182,7 @@ const handleTransactionSaved = async () => {
                   <i class="bi bi-arrow-up-circle"></i>
                 </div>
                 <div class="ms-3">
-                  <p class="text-muted mb-0">Expenses (This Month)</p>
+                  <p class="text-muted mb-0">Expenses ({{ transactionStore.summary?.thisMonth?.label || 'This Month' }})</p>
                   <h4 class="fw-bold mb-0 text-danger">{{ formatCurrency(transactionStore.summary?.thisMonth?.expense) }}</h4>
                 </div>
               </div>
@@ -146,8 +195,13 @@ const handleTransactionSaved = async () => {
       <div class="row g-4 mb-4">
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
               <h5 class="fw-bold mb-0">Spending by Category</h5>
+              <select v-model="categoryTimeRange" class="form-select form-select-sm" style="width: auto;">
+                <option v-for="option in timeRangeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
             <div class="card-body">
               <VueApexCharts
@@ -161,8 +215,13 @@ const handleTransactionSaved = async () => {
         </div>
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 py-3">
-              <h5 class="fw-bold mb-0">Daily Spending (Last 30 Days)</h5>
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+              <h5 class="fw-bold mb-0">Spending Details</h5>
+              <select v-model="dailyTimeRange" class="form-select form-select-sm" style="width: auto;">
+                <option v-for="option in timeRangeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
             <div class="card-body">
               <VueApexCharts
