@@ -242,14 +242,18 @@ Please provide personalized financial advice based on this data and our conversa
     }
 
     // Build complete message array for AI with conversation memory
+    // Format conversation history as a clear context block
+    const historyContext = conversationHistory.length > 0
+      ? `\n\n=== PREVIOUS CONVERSATION ===\n` +
+      conversationHistory.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n') +
+      `\n=== END OF HISTORY ===\n\n`
+      : '';
+
     const messages = [
       {
         role: 'system',
-        content: `You are a helpful financial advisor. Provide concise, practical, and personalized financial advice. Be encouraging but realistic. Focus on actionable recommendations.
-
-IMPORTANT: You have access to the conversation history above. You MUST remember and reference information the user shared earlier in this conversation, such as their name, previous questions, and any advice you gave. When the user asks if you remember something, check the conversation history and respond accordingly.`
+        content: `You are a helpful financial advisor. Provide concise, practical, and personalized financial advice. Be encouraging but realistic. Focus on actionable recommendations.${historyContext}CRITICAL: When the user asks if you remember something (like their name), CHECK THE PREVIOUS CONVERSATION ABOVE and answer based on that information. If they told you their name earlier, say "Your name is [NAME]." Do NOT say you don't know.`
       },
-      ...conversationHistory,
       {
         role: 'user',
         content: userPrompt
