@@ -248,10 +248,4 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 ```
 
-## License
-
-MIT
-
-## Author
-
 COMP 7980 Project
