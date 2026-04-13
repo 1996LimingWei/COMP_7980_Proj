@@ -11,16 +11,6 @@ A full-stack personal finance management application built with Vue.js, Express.
 - **AI Financial Advice**: Personalized financial advice using HKBU ChatGPT API
 - **Responsive Design**: Modern UI with Bootstrap 5
 
-### Extra Features
-- **Data Visualizations**: 
-  - Pie chart for spending by category
-  - Line/area chart for daily spending trends
-  - Summary cards with key metrics
-- **AI Financial Advice**:
-  - Chat-like interface for asking questions
-  - Personalized advice based on user's financial data
-  - Conversation history
-
 ## Tech Stack
 
 ### Backend
@@ -49,8 +39,8 @@ A full-stack personal finance management application built with Vue.js, Express.
 
 - Node.js (v16 or higher)
 - npm or yarn
-- Azure Cosmos DB for MongoDB account (provided)
-- HKBU ChatGPT API key (provided)
+- Azure Cosmos DB for MongoDB account
+- HKBU ChatGPT API key
 
 ## Setup Instructions
 
@@ -142,37 +132,6 @@ cd mobile
 npm run dev
 ```
 
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
-
-### Users
-- `GET /api/users/me` - Get profile
-- `PUT /api/users/me` - Update profile
-- `GET /api/users/me/transactions` - Get user with transactions (lookup)
-- `GET /api/users/ranking` - Get user ranking by net balance (admin)
-
-### Transactions
-- `GET /api/transactions` - List all transactions (with filters)
-- `GET /api/transactions/recent` - Get recent transactions
-- `GET /api/transactions/:id` - Get single transaction
-- `POST /api/transactions` - Create transaction
-- `PUT /api/transactions/:id` - Update transaction
-- `DELETE /api/transactions/:id` - Delete transaction
-
-### Stats
-- `GET /api/stats/summary` - Dashboard summary
-- `GET /api/stats/category` - Spending by category
-- `GET /api/stats/monthly` - Monthly spending
-- `GET /api/stats/daily` - Daily spending
-
-### AI
-- `POST /api/ai/advice` - Get personalized financial advice
-- `POST /api/ai/general` - Get general financial advice
-
 ## Sample Data
 
 The application includes sample data for testing:
@@ -210,23 +169,6 @@ Or create a new account through registration.
    - Personalized advice with user's financial context
    - Chat interface with conversation history
 
-## Development Notes
-
-### Database Connection
-The application uses Azure Cosmos DB for MongoDB. The connection string is pre-configured in the `.env.example` file.
-
-### AI Integration
-The AI advice feature uses the HKBU ChatGPT API with the following configuration:
-- Model: `gpt-5-mini`
-- Base URL: `https://genai.hkbu.edu.hk/api/v0/rest`
-
-### Error Handling
-- Login failures show a modal with error message (no page refresh)
-- API errors are handled gracefully with user-friendly messages
-- Form validation on both client and server sides
-
-## Scripts
-
 ### Server Scripts
 ```bash
 npm run dev      # Start development server with nodemon
@@ -247,5 +189,3 @@ npm run dev      # Start development server
 npm run build    # Build for production
 npm run preview  # Preview production build
 ```
-
-COMP 7980 Project
